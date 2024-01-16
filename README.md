@@ -2,9 +2,9 @@
 
 ## Database Schema Design
 
-<!-- ![Project-1-database-schema](https://github.com/joseph2413/Josephs-1-project/assets/134752607/e086510e-8b31-42bb-9b32-881e669d7b58) -->
-![db-schema]
-[db:schema]: ./images/Database-schema-project-1.png
+![Project-1-database-schema](https://github.com/joseph2413/Josephs-1-project/assets/134752607/e086510e-8b31-42bb-9b32-881e669d7b58)
+<!-- ![db-schema]
+[db:schema]: ./images/Database-schema-project-1.png -->
 
 
 ## API Documentation
