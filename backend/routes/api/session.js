@@ -8,6 +8,8 @@ const {User} = require('../../db/models');
 
 const { check } = require('express-validator');
 const { handleValidationErrors } = require('../../utils/validation');
+const user = require('../../db/models/user');
+
 
 const validateLogin = [
     check('credential')
@@ -30,8 +32,8 @@ const validateLogin = [
         where: {
           [Op.or]: {
             username: credential,
-            email: credential
-          }
+            email: credential,
+          },
         }
       });
 
@@ -45,8 +47,8 @@ const validateLogin = [
 
       const safeUser = {
         id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         username: user.username,
       };
@@ -73,6 +75,8 @@ const validateLogin = [
       if (user) {
         const safeUser = {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           username: user.username,
         };
