@@ -11,11 +11,9 @@ module.exports = {
       },
       spotId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
       },
       url: {
         type: Sequelize.STRING,
-        allowNull: false,
       },
       preview: {
         type: Sequelize.BOOLEAN
