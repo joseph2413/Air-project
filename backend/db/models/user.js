@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
           foreignKey: 'ownerId'
         }
       )
-    
+
     }
   }
   User.init(
