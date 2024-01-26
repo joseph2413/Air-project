@@ -13,6 +13,10 @@ const validateSignup = [
       .exists({ checkFalsy: true })
       .isEmail()
       .withMessage('Please provide a valid email.'),
+    check('firstName')
+      .exists({checkFalsy: true}),
+      check('lastName')
+      .exists({checkFalsy: true}),
     check('username')
       .exists({ checkFalsy: true })
       .isLength({ min: 4 })
@@ -32,14 +36,14 @@ const validateSignup = [
     '/',
     validateSignup,
     async (req, res) => {
-      const { email, password, username } = req.body;
+      const { email, password, username, firstName, lastName } = req.body;
       const hashedPassword = bcrypt.hashSync(password);
-      const user = await User.create({ email, username, hashedPassword });
+      const user = await User.create({ email, username, hashedPassword, firstName, lastName });
 
       const safeUser = {
         id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         username: user.username,
       };

@@ -24,14 +24,14 @@ const validateLogin = [
     '/',
     validateLogin,
     async (req, res, next) => {
-      const { credential, password } = req.body;
+      const { credential, password,} = req.body;
 
       const user = await User.unscoped().findOne({
         where: {
           [Op.or]: {
             username: credential,
             email: credential
-          }
+          },
         }
       });
 
@@ -45,8 +45,8 @@ const validateLogin = [
 
       const safeUser = {
         id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         username: user.username,
       };
@@ -73,6 +73,8 @@ const validateLogin = [
       if (user) {
         const safeUser = {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           username: user.username,
         };

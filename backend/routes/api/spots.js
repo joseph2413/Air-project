@@ -33,17 +33,11 @@ router.get('/', async (req, res, next) => {
 });
 
 router.get('/current', requireAuth, async (req, res) => {
+    const userId = req.user.id;
+    const  where =  { ownerId: userId}
+    const include =  {model: SpotImage,}
     try {
-        const userId = req.user.id;
-
-        const userSpots = await Spot.findAll({
-            where: {
-                ownerId: userId,
-            },
-            include:[
-                {model: SpotImage,},
-            ]
-        });
+        const userSpots = await Spot.findAll({where, include});
 
         res.json(userSpots);
     } catch (error) {
@@ -52,7 +46,7 @@ router.get('/current', requireAuth, async (req, res) => {
     }
 });
 
-router.get('/spots/:spotId', async (req, res) => {
+router.get('/:spotId', async (req, res) => {
     try {
         const { spotId } = req.params;
 
@@ -71,7 +65,10 @@ router.get('/spots/:spotId', async (req, res) => {
                 "price",
                 "createdAt",
                 "updatedAt",
-            ]
+            ],
+            include:{
+                model: SpotImage,
+            }
         });
 
         if (!spot) {
@@ -118,8 +115,9 @@ const validSpot = [
   ];
 
 router.post("/", requireAuth, validSpot, async (req, res) =>{
-    const {address, city, state, country, lat, lng, name, description, price} = req.body;
+    const {ownerId, address, city, state, country, lat, lng, name, description, price} = req.body;
     const newSpot = await Spot.create({
+        ownerId,
         address,
         city,
         state,
