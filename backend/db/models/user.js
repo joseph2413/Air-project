@@ -8,15 +8,24 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
-      // define association here
-      User.hasMany(
-        models.Spot,{
-          foreignKey: 'ownerId'
-        }
-      )
-    }
-  }
+		static associate(models) {
+			// User.hasMany(models.Booking, {
+			// 	foreignKey: "userId",
+			// 	onDelete: "CASCADE",
+			// 	hooks: true,
+			// });
+			User.hasMany(models.Spot, {
+				foreignKey: "userId",
+				onDelete: "CASCADE",
+				hooks: true,
+			});
+			User.hasMany(models.Review, {
+				foreignKey: "userId",
+				onDelete: "CASCADE",
+				hooks: true,
+			});
+		}
+	}
   User.init(
     {
       firstName: {
