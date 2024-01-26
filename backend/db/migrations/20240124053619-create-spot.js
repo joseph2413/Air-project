@@ -11,6 +11,7 @@ module.exports = {
       },
       ownerId: {
         type: Sequelize.INTEGER,
+        references: {model: 'User'},
       },
       address: {
         type: Sequelize.TEXT
