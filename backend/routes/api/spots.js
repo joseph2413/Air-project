@@ -130,5 +130,29 @@ router.post("/", requireAuth, validSpot, async (req, res) =>{
     })
     return res.json(newSpot)
 })
+router.get('/spots/current', async (req, res)=>{
+    const {ownerId} = req.params;
+
+    const UserSpots = await ownerId.findAll({
+        attributes: [
+            "id",
+            "ownerId",
+            "address",
+            "city",
+            "state",
+            "country",
+            "lat",
+            "lng",
+            "name",
+            "description",
+            "price",
+            "createdAt",
+            "updatedAt",
+        ]
+    })
+    res.json(UserSpots)
+
+
+
 
 module.exports = router;
