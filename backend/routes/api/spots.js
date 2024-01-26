@@ -32,37 +32,17 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-router.get('/spots/current', requireAuth, async (req, res) => {
+router.get('/current', requireAuth, async (req, res) => {
     try {
-        const id = req.user.id;
+        const userId = req.user.id;
 
         const userSpots = await Spot.findAll({
             where: {
-                ownerId: id,
+                ownerId: userId,
             },
-            attributes: [
-                "id",
-                "ownerId",
-                "address",
-                "city",
-                "state",
-                "country",
-                "lat",
-                "lng",
-                "name",
-                "description",
-                "price",
-                "createdAt",
-                "updatedAt",
-            ],
-            include:{
-                model: SpotImage,
-                attributes:[
-                    'id',
-                    'url',
-                    'preview',
-                ]
-            }
+            include:[
+                {model: SpotImage,},
+            ]
         });
 
         res.json(userSpots);
