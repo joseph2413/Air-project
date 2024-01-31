@@ -33,46 +33,47 @@ function _previewImage(SpotImages, mySpot) {
 
 
 async function checkConflicts(myBooking, spotArray, datesObj) {
-    const { startDate, endDate } = datesObj;
-    const errors = {};
+  const { startDate, endDate } = datesObj;
+  const errors = {};
 
-    const { startDate: myStart, endDate: myEnd } = myBooking;
+  // Get myBooking details
+  const { startDate: myStart, endDate: myEnd } = myBooking;
 
-    spotArray.forEach((ele) => {
-      const { startDate: oldStart, endDate: oldEnd } = ele;
+  spotArray.forEach((ele) => {
+    const { startDate: oldStart, endDate: oldEnd } = ele;
 
-      if (
-        ele.id !== myBooking.id
-        // &&
-        // ((new Date(oldStart) >= new Date(startDate) &&
-        //   new Date(oldStart) <= new Date(endDate)) ||
-        //   (new Date(startDate) >= new Date(oldStart) &&
-        //     new Date(startDate) <= new Date(oldEnd)))
-      ) {
-        errors.startDate = "Start date conflicts with an existing booking";
-        errors.endDate = "End date conflicts with an existing booking";
-      }
-
-      if (
-        myBooking.id !== ele.id &&
-        ((new Date(myStart) >= new Date(oldStart) &&
-          new Date(myStart) <= new Date(oldEnd)) ||
-          (new Date(myEnd) >= new Date(oldStart) &&
-            new Date(myEnd) <= new Date(oldEnd)))
-      ) {
-        errors.startDate = "Start date conflicts with an existing booking";
-        errors.endDate = "End date conflicts with an existing booking";
-      }
-    });
-
-    if (errors.startDate || errors.endDate) {
-      const err = new Error(
-        "Sorry, this spot is already booked for the specified dates"
-      );
-      err.errors = errors;
-      err.status = 403;
-      throw err;
+    if (
+      ele.id !== myBooking.id &&
+      ((new Date(oldStart) >= new Date(startDate) &&
+        new Date(oldStart) <= new Date(endDate)) ||
+        (new Date(startDate) >= new Date(oldStart) &&
+          new Date(startDate) <= new Date(oldEnd)))
+    ) {
+      errors.startDate = "Start date conflicts with an existing booking";
+      errors.endDate = "End date conflicts with an existing booking";
     }
+
+    // Exclude conflicts if myBooking overlaps with the existing booking
+    if (
+      myBooking.id !== ele.id &&
+      ((new Date(myStart) >= new Date(oldStart) &&
+        new Date(myStart) <= new Date(oldEnd)) ||
+        (new Date(myEnd) >= new Date(oldStart) &&
+          new Date(myEnd) <= new Date(oldEnd)))
+    ) {
+      errors.startDate = "Start date conflicts with an existing booking";
+      errors.endDate = "End date conflicts with an existing booking";
+    }
+  });
+
+  if (errors.startDate || errors.endDate) {
+    const err = new Error(
+      "Sorry, this spot is already booked for the specified dates"
+    );
+    err.errors = errors;
+    err.status = 403;
+    throw err;
   }
+}
 
 module.exports = { formatSpots, checkConflicts };
