@@ -26,7 +26,7 @@ const testAuthorization = async (req, res, next) => {
 
 		const { ownerId } = mySpot;
 
-		if (Number(userId) !== Number(ownerId)) throw new Error("Not allowed with current permissions");
+		if (Number(userId) !== Number(ownerId)) throw new Error("Forbidden");
 	} catch (err) {
 		return next(err);
 	}

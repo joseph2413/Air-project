@@ -91,36 +91,27 @@ router.put(
 		};
 		const options = {
 			where: { id: bookingsId },
-			/* ONLY supported for Postgres */
-			// will return the results without needing another db query
 			returning: true,
 			plain: true,
 		};
 
 		try {
-			// find Booking with associated spot and all its bookings
 			const myBooking = await Booking.findByPk(bookingsId, { include });
 
 			const { Bookings } = myBooking.Spot;
 
-			// Validate Dates dont conflict with any others
-			const dates = { startDate, endDate };
-			checkConflicts(Bookings, dates);
+			if(Bookings.id === req.params.id){
+				const updatedBooking = await Booking.update(payload, options);
 
-			// test if booking is for the future
-			if (new Date(startDate) <= new Date()) {
-				throw new Error("Past bookings can't be modified");
+				if (!isProduction) {
+					updatedBooking.sqlite = await Booking.findByPk(bookingsId);
+				}
+
+				return res.json(updatedBooking.sqlite || updatedBooking[1].dataValues);
+			}else{
+				const dates = { startDate, endDate };
+				checkConflicts(Bookings, dates);
 			}
-
-			// Update
-			const updatedBooking = await Booking.update(payload, options);
-
-			// check if we are in production or if we have to make another DB query
-			if (!isProduction) {
-				updatedBooking.sqlite = await Booking.findByPk(bookingsId);
-			}
-
-			return res.json(updatedBooking.sqlite || updatedBooking[1].dataValues);
 		} catch (err) {
 			return next(err);
 		}
