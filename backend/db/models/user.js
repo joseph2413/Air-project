@@ -71,7 +71,6 @@ module.exports = (sequelize, DataTypes) => {
 						"email",
 						"createdAt",
 						"updatedAt",
-						"username",
 					],
 				},
 			},

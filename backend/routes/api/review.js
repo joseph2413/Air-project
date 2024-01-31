@@ -1,22 +1,28 @@
 const router = require("express").Router();
-const { Review, User, Spot, ReviewImage } = require("../../db/models");
+const {
+	Review,
+	User,
+	Spot,
+	ReviewImage,
+	SpotImage,
+} = require("../../db/models");
 const { requireAuth } = require("../../utils/auth");
+// const { formatSpots } = require("../../utils/utils");
 // chech production or dev
 const { environment } = require("../../config");
 const isProduction = environment === "production";
 
 // Middleware helper for Review authorization
-const authorization = async (req, res, next) => {
+const testAuthorization = async (req, res, next) => {
 	const { id: userId } = req.user;
-	const { id: spotImageId } = req.params;
-    const include = { include: Spot };
+	const { reviewId } = req.params;
 
 	try {
-		const mySpotImage = await Review.findByPk(spotImageId, include);
+		const myReview = await Review.findByPk(reviewId);
 
-		if (!mySpotImage) throw new Error("Review couldn't be found");
+		if (!myReview) throw new Error("Review couldn't be found");
 
-		const { userId: ownerId } = mySpotImage.Spot;
+		const { userId: ownerId } = myReview;
 
 		if (Number(userId) !== Number(ownerId)) throw new Error("Forbidden");
 	} catch (err) {
@@ -25,24 +31,56 @@ const authorization = async (req, res, next) => {
 	return next();
 };
 
+///
+/// GET
+///
+
+// get all reviews for the current user requires authentication
 router.get("/current", requireAuth, async (req, res, next) => {
 	const { id: userId } = req.user;
 	const where = { userId: userId };
+	const include = [
+		{
+			model: User,
+		},
+		{
+			model: Spot,
+			// remove [description, updated, created]
+			// add previewImage
+			attributes: {
+				exclude: ["description", "updatedAt", "createdAt"],
+			},
+			include: SpotImage,
+		},
+		{
+			model: ReviewImage,
+		},
+	];
 
 	try {
-		const myReviews = await Review.findAll({ where });
+		const Reviews = await Review.findAll({ where, include });
 
-		res.json({ myReviews });
+		Reviews.forEach((ele) => {
+			const { Spot } = ele;
+
+			// formatSpots([Spot], true, false);
+		});
+
+		res.json({ Reviews });
 	} catch (err) {
 		return next(err);
 	}
 });
 
+///
+/// POST
+///
 
+// Add an image to a review with authentication and authorization
 router.post(
 	"/:reviewId/images",
 	requireAuth,
-	authorization,
+	testAuthorization,
 	async (req, res, next) => {
 		const { url } = req.body;
 		const { reviewId } = req.params;
@@ -61,29 +99,33 @@ router.post(
 				);
 			}
 
-			const newReviewImage = await Review.create(payload);
+			const { id } = await ReviewImage.create(payload);
 
-			return res.json({ newReviewImage });
+			return res.json({ id, url });
 		} catch (err) {
 			return next(err);
 		}
 	},
 );
 
+///
+/// PUT
+///
 
+// edit a review with authentication and authorization
 router.put(
 	"/:reviewId",
 	requireAuth,
-	authorization,
+	testAuthorization,
 	async (req, res, next) => {
 		const { review, stars } = req.body;
 		const { reviewId } = req.params;
 		const payload = {
-			reviweMsg: review,
+			review: review,
 			stars: stars,
 		};
 		const options = {
-			where: { reviewId: reviewId },
+			where: { id: reviewId },
 			/* ONLY supported for Postgres */
 			// will return the results without needing another db query
 			returning: true,
@@ -93,6 +135,7 @@ router.put(
 		try {
 			const updatedReview = await Review.update(payload, options);
 
+			// check if we are in production or if we have to make another DB query
 			if (!isProduction) {
 				updatedReview.sqlite = await Review.findByPk(reviewId);
 			}
@@ -104,10 +147,15 @@ router.put(
 	},
 );
 
+///
+/// DELETE
+///
+
+// delete a review with authentication and authorization
 router.delete(
 	"/:reviewId",
 	requireAuth,
-	authorization,
+	testAuthorization,
 	async (req, res, next) => {
 		const { reviewId } = req.params;
 		const where = { id: reviewId };
@@ -121,5 +169,16 @@ router.delete(
 		}
 	},
 );
+
+///
+/// ERROR HANDLING
+///
+
+// router.use((err, req, res, next) => {
+// 	if (err.message === "Review couldn't be found") {
+// 		return res.status(404).json({ message: err.message });
+// 	}
+// 	return next(err);
+// });
 
 module.exports = router;

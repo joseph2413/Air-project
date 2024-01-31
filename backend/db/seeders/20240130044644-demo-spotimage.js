@@ -1,6 +1,6 @@
 'use strict';
 
-const { Review } = require("../models");
+const { SpotImage } = require("../models");
 
 let options = {};
 if (process.env.NODE_ENV === "production") {
@@ -11,25 +11,22 @@ if (process.env.NODE_ENV === "production") {
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
-      await Review.bulkCreate(
+      await SpotImage.bulkCreate(
         [
           {
-            userId: 1,
             spotId: 1,
-            review: "This place is awesome",
-            stars: 5,
+            url: "image10",
+            preview: true,
           },
           {
-            userId: 2,
             spotId: 2,
-            review: "This place is Ok",
-            stars: 3,
+            url: "image11",
+            preview: true,
           },
           {
-            userId: 2,
             spotId: 3,
-            review: "This place is horrible",
-            stars: 1,
+            url: "image12",
+            preview: true,
           },
         ],
         { validate: true }
@@ -40,7 +37,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Reviews";
+    options.tableName = "SpotImages";
     return queryInterface.bulkDelete(
       options,
       {}
