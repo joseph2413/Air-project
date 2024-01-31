@@ -97,10 +97,10 @@ router.put(
 
 		try {
 			const myBooking = await Booking.findByPk(bookingsId, { include });
-
+			console.log(myBooking)
 			const { Bookings } = myBooking.Spot;
 
-			if(Bookings.id === req.params.id){
+			if(myBooking.id == bookingsId){
 				const updatedBooking = await Booking.update(payload, options);
 
 				if (!isProduction) {

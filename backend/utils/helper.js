@@ -32,36 +32,47 @@ function _previewImage(SpotImages, mySpot) {
 }
 
 
-function checkConflicts(spotArray, datesObj) {
-	const { startDate, endDate } = datesObj;
+async function checkConflicts(myBooking, spotArray, datesObj) {
+    const { startDate, endDate } = datesObj;
+    const errors = {};
 
-	const errors = {};
-	spotArray.forEach((ele) => {
-		const { startDate: oldStart, endDate: oldEnd } = ele;
+    const { startDate: myStart, endDate: myEnd } = myBooking;
 
-		if (
-			new Date(oldStart) >= new Date(startDate) &&
-			new Date(oldStart) <= new Date(endDate)
-		) {
-			errors.endDate = "End date conflicts with an existing booking";
-		}
+    spotArray.forEach((ele) => {
+      const { startDate: oldStart, endDate: oldEnd } = ele;
 
-		if (
-			new Date(startDate) >= new Date(oldStart) &&
-			new Date(startDate) <= new Date(oldEnd)
-		) {
-			errors.startDate = "Start date conflicts with an existing booking";
-		}
-	});
+      if (
+        ele.id !== myBooking.id
+        // &&
+        // ((new Date(oldStart) >= new Date(startDate) &&
+        //   new Date(oldStart) <= new Date(endDate)) ||
+        //   (new Date(startDate) >= new Date(oldStart) &&
+        //     new Date(startDate) <= new Date(oldEnd)))
+      ) {
+        errors.startDate = "Start date conflicts with an existing booking";
+        errors.endDate = "End date conflicts with an existing booking";
+      }
 
-	if (errors.startDate || errors.endDate) {
-		const err = new Error(
-			"Sorry, this spot is already booked for the specified dates",
-		);
-		err.errors = errors;
-		err.status = 403;
-		throw err;
-	}
-}
+      if (
+        myBooking.id !== ele.id &&
+        ((new Date(myStart) >= new Date(oldStart) &&
+          new Date(myStart) <= new Date(oldEnd)) ||
+          (new Date(myEnd) >= new Date(oldStart) &&
+            new Date(myEnd) <= new Date(oldEnd)))
+      ) {
+        errors.startDate = "Start date conflicts with an existing booking";
+        errors.endDate = "End date conflicts with an existing booking";
+      }
+    });
+
+    if (errors.startDate || errors.endDate) {
+      const err = new Error(
+        "Sorry, this spot is already booked for the specified dates"
+      );
+      err.errors = errors;
+      err.status = 403;
+      throw err;
+    }
+  }
 
 module.exports = { formatSpots, checkConflicts };
