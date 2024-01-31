@@ -21,13 +21,13 @@ module.exports = {
           },
           {
             userId: 2,
-            spotId: 2,
+            spotId: 3,
             review: "This place is Ok",
             stars: 3,
           },
           {
-            userId: 2,
-            spotId: 3,
+            userId: 3,
+            spotId: 1,
             review: "This place is horrible",
             stars: 1,
           },
