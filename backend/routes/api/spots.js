@@ -351,7 +351,7 @@ router.post("/:id/bookings", requireAuth, async (req, res, next) => {
 		const mySpot = await Spot.findByPk(spotId);
 		if (!mySpot) throw new Error("Spot couldn't be found");
 		const { ownerId } = mySpot;
-		if (Number(userId) === Number(ownerId)) throw new Error("You don't have Authorization");
+		if (Number(userId) === Number(ownerId)) throw new Error("Forbidden");
 
 		const spotBookings = await Booking.findAll({ where });
 
