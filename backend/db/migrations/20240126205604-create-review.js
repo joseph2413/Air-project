@@ -9,9 +9,8 @@ if (process.env.NODE_ENV === "production") {
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-	async up(queryInterface, Sequelize) {
-		await queryInterface.createTable(
-			"Reviews",
+	up: (queryInterface, Sequelize) => {
+		return queryInterface.createTable('Reviews',
 			{
 				id: {
 					allowNull: false,
