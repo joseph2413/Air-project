@@ -57,7 +57,7 @@ function checkConflicts(spotArray, datesObj) {
 			errors.startDate = "Start date conflicts with an existing booking";
 		}
 	});
-	
+
 
 	if (errors.startDate || errors.endDate) {
 		const err = new Error(
