@@ -1,6 +1,5 @@
 'use strict';
 
-const { Booking } = require("../models");
 
 
 let options = {};
@@ -11,8 +10,8 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    try {
-      await Booking.bulkCreate(
+    options.tableName = 'Bookings'
+      return queryInterface.bulkInsert(options,
         [
           {
             userId: 1,
@@ -35,16 +34,10 @@ module.exports = {
         ],
         { validate: true }
       );
-    } catch (err) {
-      console.log(err);
-    }
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Bookings";
-    return queryInterface.bulkDelete(
-      options,
-      {}
-    );
+    options.tableName = 'Bookings'
+    return queryInterface.bulkDelete(options);
   },
 };

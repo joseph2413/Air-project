@@ -1,6 +1,5 @@
 'use strict';
 
-const { Review } = require("../models");
 
 let options = {};
 if (process.env.NODE_ENV === "production") {
@@ -10,8 +9,8 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    try {
-      await Review.bulkCreate(
+      options.tableName = 'Reviews'
+      await queryInterface.bulkInsert(options,
         [
           {
             userId: 1,
@@ -34,16 +33,10 @@ module.exports = {
         ],
         { validate: true }
       );
-    } catch (err) {
-      console.log(err);
-    }
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Reviews";
-    return queryInterface.bulkDelete(
-      options,
-      {}
-    );
+    options.tableName = 'Reviews'
+    return queryInterface.bulkDelete(options);
   },
 };

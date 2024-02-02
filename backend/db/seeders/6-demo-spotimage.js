@@ -1,6 +1,5 @@
 'use strict';
 
-const { SpotImage } = require("../models");
 
 let options = {};
 if (process.env.NODE_ENV === "production") {
@@ -10,8 +9,8 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    try {
-      await SpotImage.bulkCreate(
+    options.tableName = 'SpotImages'
+      return queryInterface.bulkInsert(options,
         [
           {
             spotId: 1,
@@ -31,16 +30,10 @@ module.exports = {
         ],
         { validate: true }
       );
-    } catch (err) {
-      console.log(err);
-    }
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "SpotImages";
-    return queryInterface.bulkDelete(
-      options,
-      {}
-    );
+    options.tableName = 'SpotImages'
+    await queryInterface.bulkDelete(options);
   },
 };
