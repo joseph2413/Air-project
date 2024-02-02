@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { Spot, Booking, SpotImage } = require("../../db/models");
+const { Spot, SpotImage, Review, ReviewImage, User, Booking, Sequelize } = require('../../db/models');;
 const { requireAuth } = require("../../utils/auth");
 const { formatSpots, checkConflicts } = require("../../utils/helper");
 const { environment } = require("../../config");
@@ -14,7 +14,7 @@ const testAuthorization = async (req, res, next) => {
 	try {
 		const myBooking = await Booking.findByPk(bookingsId, { include });
 
-		if (!myBooking) throw new Error("Booking couldn't be found");
+		if (!myBooking) res.status(404).json({"message": "Booking couldn't be found"});
 
 		const { userId: ownerId } = myBooking;
 
@@ -74,49 +74,56 @@ router.get("/current", requireAuth, async (req, res, next) => {
 /// PUT
 ///
 
-router.put(
-	"/:bookingsId",
-	requireAuth,
-	testAuthorization,
-	async (req, res, next) => {
-		const { startDate, endDate } = req.body;
-		const { bookingsId } = req.params;
-		const include = {
-			model: Spot,
-			include: Booking,
+router.put("/:bookingsId", requireAuth, testAuthorization, async (req, res, next) => {
+    const { startDate, endDate } = req.body;
+    const { bookingsId } = req.params;
+    const userId = req.user.id;
+    // const options = {
+    //     where: { id: bookingsId },
+    //     returning: true,
+    //     plain: true,
+    // };
+
+    try {
+        const myBooking = await Booking.findByPk(bookingsId);
+		if(!myBooking){
+			return res.status(404).json({message: "Booking couldn't be found"});
 		};
-		const payload = {
-			startDate: startDate,
-			endDate: endDate,
-		};
-		const options = {
-			where: { id: bookingsId },
-			returning: true,
-			plain: true,
-		};
+		if (new Date(myBooking.endDate) < new Date()) {
+            return res.status(403).json({ message: "Past bookings can't be modified" });
+        };
+		if (new Date(startDate) >= new Date(endDate)) {
+            return res.status(400).json({ errors: { endDate: "endDate cannot come before or on the startDate", startDate: "startDate cannot be on the endDate"} });
+        };
 
-		try {
-			const myBooking = await Booking.findByPk(bookingsId, { include });
-			console.log(myBooking)
-			const { Bookings } = myBooking.Spot;
-
-			if(myBooking.id == bookingsId){
-				const updatedBooking = await Booking.update(payload, options);
-
-				if (!isProduction) {
-					updatedBooking.sqlite = await Booking.findByPk(bookingsId);
-				}
-
-				return res.json(updatedBooking.sqlite || updatedBooking[1].dataValues);
-			}else{
-				const dates = { startDate, endDate };
-				checkConflicts(Bookings, dates);
+		const otherBookings = await Booking.findAll({
+			where:{
+				spotId: myBooking.spotId,
+				id:{[Sequelize.Op.ne]: bookingsId}
 			}
-		} catch (err) {
-			return next(err);
+		})
+		for(const other of otherBookings){
+			if (new Date(startDate) <= new Date(other.endDate) && new Date(endDate) >= new Date(other.startDate)) {
+				return res.status(403).json({
+					message: "Sorry, this spot is already booked for the specified dates",
+					errors: {
+						startDate: "Start date conflicts with an existing booking",
+						endDate: "End date conflicts with an existing booking"
+					}
+				});
+			}
 		}
-	},
-);
+
+		myBooking.startDate = startDate;
+		myBooking.endDate = endDate;
+		await myBooking.save()
+
+		res.status(200).json(myBooking)
+
+    } catch (err) {
+        return next(err);
+    }
+});
 
 
 ///

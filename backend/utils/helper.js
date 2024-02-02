@@ -37,15 +37,11 @@ function _previewImage(SpotImages, mySpot) {
 ///
 
 function checkConflicts(spotArray, datesObj) {
-	const { startDate, endDate, bookingId, isEdit  } = datesObj;
+	const { startDate, endDate } = datesObj;
 
 	const errors = {};
 	spotArray.forEach((ele) => {
-		const { startDate: oldStart, endDate: oldEnd, bookingId: oldBookingId } = ele;
-
-        if (isEdit && oldBookingId === bookingId) {
-            return;
-        }
+		const { startDate: oldStart, endDate: oldEnd } = ele;
 
 		if (
 			new Date(oldStart) >= new Date(startDate) &&
@@ -61,6 +57,7 @@ function checkConflicts(spotArray, datesObj) {
 			errors.startDate = "Start date conflicts with an existing booking";
 		}
 	});
+	
 
 	if (errors.startDate || errors.endDate) {
 		const err = new Error(

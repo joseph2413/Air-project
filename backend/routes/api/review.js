@@ -20,7 +20,9 @@ const testAuthorization = async (req, res, next) => {
 	try {
 		const myReview = await Review.findByPk(reviewId);
 
-		if (!myReview) throw new Error("Review couldn't be found");
+		if (!myReview){
+			return res.status(404).json({"message": "Review couldn't be found"})
+		};
 
 		const { userId: ownerId } = myReview;
 
@@ -94,9 +96,7 @@ router.post(
 			const limit = await ReviewImage.count({ where });
 
 			if (limit >= 10) {
-				throw new Error(
-					"Maximum number of images for this resource was reached",
-				);
+				res.status(403).json({"message": "Maximum number of images for this resource was reached"})
 			}
 
 			const { id } = await ReviewImage.create(payload);
@@ -142,7 +142,7 @@ router.put(
 
 			return res.json(updatedReview.sqlite || updatedReview[1].dataValues);
 		} catch (err) {
-			return next(err);
+			return res.status(400).json(err);
 		}
 	},
 );

@@ -9,6 +9,7 @@ const {
 	User,
 	Booking,
 	ReviewImage,
+	Sequelize,
 } = require("../../db/models");
 const { requireAuth } = require("../../utils/auth");
 const { formatSpots, checkConflicts } = require("../../utils/helper");
@@ -22,7 +23,9 @@ const testAuthorization = async (req, res, next) => {
 	try {
 		const mySpot = await Spot.findByPk(spotId);
 
-		if (!mySpot) throw new Error("Spot couldn't be found");
+		if (!mySpot){
+			res.status(404).json({"message": "Spot couldn't be found"})
+		}
 
 		const { ownerId } = mySpot;
 
@@ -74,60 +77,88 @@ const validateQueryFilters = [
 ];
 
 // Get all spots
-router.get("/", validateQueryFilters, async (req, res, next) => {
-	const { page, size, minLat, maxLat, minLng, maxLng, minPrice, maxPrice } =
-		req.query;
-	const include = [
-		{
-			model: Review,
-		},
-		{
-			model: SpotImage,
-		},
-	];
-	const where = {};
+router.get('/', async (req, res) => {
+    try {
+        let page = parseInt(req.query.page) || 1;
+        let size = parseInt(req.query.size) || 20;
+        const minLat = parseFloat(req.query.minLat);
+        const maxLat = parseFloat(req.query.maxLat);
+        const minLng = parseFloat(req.query.minLng);
+        const maxLng = parseFloat(req.query.maxLng);
+        const minPrice = parseFloat(req.query.minPrice);
+        const maxPrice = parseFloat(req.query.maxPrice);
 
-	if (minLat && maxLat) {
-		where.lat = {
-			[Op.and]: {
-				[Op.gt]: minLat,
-				[Op.lt]: maxLat,
-			},
-		};
-	} else if (minLat) where.lat = { [Op.gt]: minLat };
-	else if (maxLat) where.lat = { [Op.lt]: maxLat };
+        let errors = {};
+        if (page < 1) errors.page = "Page must be greater than or equal to 1";
+        if (size < 1 || size > 20) errors.size = "Size must be greater than or equal to 1";
+        if (minLat !== undefined && (isNaN(minLat) || minLat < -90 || minLat > 90)) errors.minLat = "Minimum latitude is invalid";
+        if (maxLat !== undefined && (isNaN(maxLat) || maxLat < -90 || maxLat > 90)) errors.maxLat = "Maximum latitude is invalid";
+        if (minLng !== undefined && (isNaN(minLng) || minLng < -180 || minLng > 180)) errors.minLng = "Minimum longitude is invalid";
+        if (maxLng !== undefined && (isNaN(maxLng) || maxLng < -180 || maxLng > 180)) errors.maxLng = "Maximum longitude is invalid";
+        if ((minPrice !== undefined && isNaN(minPrice)) || minPrice < 0) errors.minPrice = "Minimum price must be greater than or equal to 0";
+        if ((maxPrice !== undefined && isNaN(maxPrice)) || maxPrice < 0) errors.maxPrice = "Maximum price must be greater than or equal to 0";
 
-	if (minLng && maxLng) {
-		where.lng = {
-			[Op.and]: {
-				[Op.gt]: minLng,
-				[Op.lt]: maxLng,
-			},
-		};
-	} else if (minLng) where.lng = { [Op.gt]: minLng };
-	else if (maxLng) where.lng = { [Op.lt]: maxLng };
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({ message: "Bad Request", errors });
+        }
 
-	if (minPrice && maxPrice) {
-		where.price = {
-			[Op.and]: {
-				[Op.gt]: minPrice,
-				[Op.lt]: maxPrice,
-			},
-		};
-	} else if (minPrice) where.price = { [Op.gt]: minPrice };
-	else if (maxPrice) where.price = { [Op.lt]: maxPrice };
+        let where = {};
+        if (minLat !== undefined) where.lat = { [Sequelize.Op.gte]: minLat };
+        if (maxLat !== undefined) where.lat = { ...where.lat, [Sequelize.Op.lte]: maxLat };
+        if (minLng !== undefined) where.lng = { [Sequelize.Op.gte]: minLng };
+        if (maxLng !== undefined) where.lng = { ...where.lng, [Sequelize.Op.lte]: maxLng };
+        if (minPrice !== undefined) where.price = { [Sequelize.Op.gte]: minPrice };
+        if (maxPrice !== undefined) where.price = { ...where.price, [Sequelize.Op.lte]: maxPrice };
 
-	const pagination = _paginationBuilder(page, size);
+        let offset = (page - 1) * size;
+        let limit = size;
 
-	try {
-		const Spots = await Spot.findAll({ include, where, ...pagination });
+        const spots = await Spot.findAll({
+            include: [
+                {
+                    model: SpotImage,
+                    attributes: ['url'],
+                    where: { preview: true },
+                    limit: 1
+                },
+                {
+                    model: Review,
+                    attributes: [],
+                }
+            ],
+            attributes: {
+                include: [
+                    [Sequelize.fn('AVG', Sequelize.col('Reviews.stars')), 'avgRating']
+                ]
+            },
+            group: ['Spot.id'],
+            limit,
+            offset,
+            subQuery: false,
+            order: [['id']]
+        });
 
-		formatSpots(Spots, true);
 
-		return res.json({ Spots, page, size });
-	} catch (err) {
-		return next(err);
-	}
+
+        const spotsResponse = spots.map(spot => {
+            const spotJSON = spot.toJSON();
+            spotJSON.avgRating = parseFloat(spotJSON.avgRating).toFixed(1);
+            if (spotJSON.SpotImages && spotJSON.SpotImages.length) {
+                spotJSON.previewImage = spotJSON.SpotImages[0].url;
+            }
+            delete spotJSON.SpotImages;
+            return spotJSON;
+        });
+
+        res.status(200).json({
+            Spots: spotsResponse,
+            page: page,
+            size: size
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 function _paginationBuilder(page, size) {
@@ -186,7 +217,7 @@ router.get("/:id", async (req, res, next) => {
 	try {
 		const spotDetails = await Spot.findByPk(spotId, { include });
 		if (!spotDetails) {
-			throw new Error("Spot couldn't be found");
+			return res.status(404).json({ "message": "Spot couldn't be found"})
 		}
 
 		spotDetails.dataValues.numReviews = spotDetails.dataValues.Reviews.length;
@@ -215,7 +246,9 @@ router.get("/:id/reviews", async (req, res, next) => {
 	try {
 		const mySpot = await Spot.findByPk(spotId);
 
-		if (!mySpot) throw new Error("Spot couldn't be found");
+		if (!mySpot){
+			return res.status(404).json({"message": "Spot couldn't be found"})
+		}
 
 		const Reviews = await Review.findAll({ where, include });
 
@@ -239,7 +272,7 @@ router.get("/:id/bookings", requireAuth, async (req, res, next) => {
 	try {
 		const mySpot = await Spot.findByPk(spotId, { include });
 
-		if (!mySpot) throw new Error("Spot couldn't be found");
+		if (!mySpot) res.status(404).json({"message": "Spot couldn't be found"})
 
 		const { ownerId, Bookings } = mySpot;
 
@@ -285,7 +318,7 @@ router.post("/", requireAuth, async (req, res, next) => {
 			...dataValues,
 		});
 	} catch (err) {
-		return next(err);
+		return res.status(400).json(err);
 	}
 });
 
@@ -335,9 +368,9 @@ router.post("/:id/reviews", requireAuth, async (req, res, next) => {
 		return res.status(201).json(newReview);
 	} catch (err) {
 		if (err.message.toLowerCase().includes("foreign key constraint")) {
-			throw new Error("Spot couldn't be found");
+			res.status(404).json({"message": "Spot couldn't be found"});
 		}
-		return next(err);
+		return res.status(400), next(err);
 	}
 });
 
@@ -349,7 +382,9 @@ router.post("/:id/bookings", requireAuth, async (req, res, next) => {
 
 	try {
 		const mySpot = await Spot.findByPk(spotId);
-		if (!mySpot) throw new Error("Spot couldn't be found");
+		if (!mySpot){
+			res.status(404).json({"message": "Spot couldn't be found"})
+		}
 		const { ownerId } = mySpot;
 		if (Number(userId) === Number(ownerId)) throw new Error("Forbidden");
 
@@ -408,7 +443,7 @@ router.put("/:id", requireAuth, testAuthorization, async (req, res, next) => {
 		}
 		return res.json(updatedSpot.sqlite || updatedSpot[1].dataValues);
 	} catch (err) {
-		return next(err);
+		return res.status(400).json(err);
 	}
 });
 

@@ -11,7 +11,7 @@ const testAuthorization = async (req, res, next) => {
 	try {
 		const mySpotImage = await ReviewImage.findByPk(reviewImageId, include);
 
-		if (!mySpotImage) throw new Error("Review Image couldn't be found");
+		if (!mySpotImage) res.status(404).json({'message': "Review Image couldn't be found"})
 
 		const { userId: ownerId } = mySpotImage.Review;
 
