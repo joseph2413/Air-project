@@ -1,19 +1,21 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-//TEST ROUTE:
-// router.get('/hello/world', function(req, res) {
-//   res.cookie('XSRF-TOKEN', req.csrfToken());
-//   res.send('Hello World!');
-// });
-const apiRouter = require('./api/index');
-router.use('/api', apiRouter)
+const apiRouter = require("./api");
 
-router.get('/api/csrf/restore', (req, res) =>{
-    const csrfToken = req.csrfToken();
-    res.cookie('XRSF-TOKEN', csrfToken);
-    res.status(200).json({
-        'XSRF-TOKEN': csrfToken
-    });
+// router.get("/hello/world", function (req, res) {
+// 	res.cookie("XSRF-TOKEN", req.csrfToken());
+// 	res.send("Hello World!");
+// });
+
+// Add a XSRF-TOKEN cookie
+router.get("/api/csrf/restore", (req, res) => {
+  const csrfToken = req.csrfToken();
+  res.cookie("XSRF-TOKEN", csrfToken);
+  res.status(200).json({
+    'XSRF-Token': csrfToken
+  });
 });
+
+router.use("/api", apiRouter);
 
 module.exports = router;
