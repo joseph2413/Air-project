@@ -1,13 +1,10 @@
 function formatSpots(spotsArray, oneImage = false, rateSpot = true) {
-	// loop through array
 	spotsArray.forEach((ele, i) => {
 		const { Reviews, SpotImages } = ele.dataValues;
 		const mySpot = spotsArray[i].dataValues;
 
-		// need avgStarRating?
 		if (rateSpot) _avgStarRating(Reviews, mySpot);
 
-		// Only need one Image? aka previewImage
 		if (oneImage) _previewImage(SpotImages, mySpot);
 	});
 }
@@ -32,10 +29,6 @@ function _previewImage(SpotImages, mySpot) {
 	delete mySpot.SpotImages;
 }
 
-///
-/// Booking Utils
-///
-
 function checkConflicts(spotArray, datesObj) {
 	const { startDate, endDate } = datesObj;
 
@@ -57,7 +50,7 @@ function checkConflicts(spotArray, datesObj) {
 			errors.startDate = "Start date conflicts with an existing booking";
 		}
 	});
-	
+
 
 	if (errors.startDate || errors.endDate) {
 		const err = new Error(
