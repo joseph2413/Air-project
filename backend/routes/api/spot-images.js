@@ -11,10 +11,14 @@ const testAuthorization = async (req, res, next) => {
 	try {
 		const mySpotImage = await SpotImage.findByPk(spotImageId, include);
 
-		if (!mySpotImage) res.status(404).json({"message": "Spot could'nt be found"})
+		if (!mySpotImage){
+			res.status(404).json({"message": "Spot Image couldn't be found"})
+		}
 		const { ownerId } = mySpotImage.Spot;
 
-		if (Number(userId) !== Number(ownerId)) throw new Error("Forbidden");
+		if (Number(userId) !== Number(ownerId)){
+			res.status(401).json({"message": "Forbidden"});
+		}
 	} catch (err) {
 		return next(err);
 	}

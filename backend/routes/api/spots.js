@@ -29,7 +29,7 @@ const testAuthorization = async (req, res, next) => {
 
 		const { ownerId } = mySpot;
 
-		if (Number(userId) !== Number(ownerId)) throw new Error("Forbidden");
+		if (Number(userId) !== Number(ownerId)) res.status(401).json({"message": "Forbidden"});
 	} catch (err) {
 		return next(err);
 	}
