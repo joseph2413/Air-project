@@ -25,11 +25,13 @@ const testAuthorization = async (req, res, next) => {
 
 		if (!mySpot){
 			res.status(404).json({"message": "Spot couldn't be found"})
+		}else{
+
+			if (Number(userId) !== Number(mySpot.toJSON().ownerId)){
+				res.status(401).json({"message": "Forbidden"});
+			}
 		}
 
-		const { ownerId } = mySpot;
-
-		if (Number(userId) !== Number(ownerId)) res.status(401).json({"message": "Forbidden"});
 	} catch (err) {
 		return next(err);
 	}
@@ -426,15 +428,23 @@ router.put("/:id", requireAuth, testAuthorization, async (req, res, next) => {
 router.delete(
 	"/:id",
 	requireAuth,
-	testAuthorization,
 	async (req, res, next) => {
 		const { id: spotId } = req.params;
-		const where = { id: spotId };
-
+		const { id: userId } = req.user;
+		console.log(spotId)
+		const mySpot = await Spot.findByPk(spotId);
 		try {
-			await Spot.destroy({ where });
+			if (!mySpot){
+				res.status(404).json({"message": "Spot couldn't be found"})
+			}else{
 
-			return res.json({ message: "Successfully deleted" });
+				if (Number(userId) !== Number(mySpot.toJSON().ownerId)){
+					res.status(401).json({"message": "Forbidden"});
+				}else{
+				await mySpot.destroy();
+				return res.json({ message: "Successfully deleted" });
+				}
+			}
 		} catch (err) {
 			return next(err);
 		}
