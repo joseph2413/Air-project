@@ -28,7 +28,7 @@ const testAuthorization = async (req, res, next) => {
 		}else{
 
 			if (Number(userId) !== Number(mySpot.toJSON().ownerId)){
-				res.status(401).json({"message": "Forbidden"});
+				res.status(403).json({"message": "Forbidden"});
 			}
 		}
 

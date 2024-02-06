@@ -35,7 +35,7 @@ router.delete("/:id", requireAuth, async (req, res, next) => {
       return res.status(404).json({ message: "Spot Image couldn't be found" });
     } else {
       if (Number(userId) !== Number(mySpotImage.Spot.toJSON().ownerId)) {
-        return res.status(401).json({ message: "Forbidden" });
+        return res.status(403).json({ message: "Forbidden" });
       }else{
 		  await mySpotImage.destroy();
 		  return res.json({ message: "Successfully deleted" });
