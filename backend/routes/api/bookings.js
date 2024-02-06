@@ -93,7 +93,7 @@ router.put("/:bookingsId", requireAuth, testAuthorization, async (req, res, next
             return res.status(403).json({ message: "Past bookings can't be modified" });
         };
 		if (new Date(startDate) >= new Date(endDate)) {
-            return res.status(400).json({ errors: { endDate: "endDate cannot come before or on the startDate", startDate: "startDate cannot be on the endDate"} });
+            return res.status(403).json({ errors: { endDate: "endDate cannot come before or on the startDate", startDate: "startDate cannot be on the endDate"} });
         };
 
 		const otherBookings = await Booking.findAll({

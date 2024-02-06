@@ -363,7 +363,7 @@ router.post("/:id/bookings", requireAuth, async (req, res, next) => {
 			res.status(404).json({"message": "Spot couldn't be found"})
 		}
 		const { ownerId } = mySpot;
-		if (Number(userId) === Number(ownerId)) throw new Error("Forbidden");
+		if (Number(userId) === Number(ownerId)) return res.status(403).json({ message: "Forbidden" });
 
 		const spotBookings = await Booking.findAll({ where });
 
@@ -439,7 +439,7 @@ router.delete(
 			}else{
 
 				if (Number(userId) !== Number(mySpot.toJSON().ownerId)){
-					res.status(401).json({"message": "Forbidden"});
+					res.status(403).json({"message": "Forbidden"});
 				}else{
 				await mySpot.destroy();
 				return res.json({ message: "Successfully deleted" });
